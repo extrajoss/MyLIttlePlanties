@@ -1,11 +1,9 @@
 const path = require('path')
-const fs = require('fs')
 
 const _ = require('lodash')
 
 const config = require('./config')
 
-const mime = require('mime')
 const multer = require('multer')
 const upload = multer({dest: config.filesDir})
 

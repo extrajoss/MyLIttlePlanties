@@ -17,7 +17,7 @@ Out of the box, it includes:
 
 First, download the [package](https://github.com/boscoh/plasticgui/archive/master.zip)
 
-1. To quickly run PlasticGui in the client/Nodejs-server combo, in the  `nodeserver` directory, install the dependencies:
+1. To quickly run PlasticGui in the client/Nodejs-server combo, in the  `server` directory, install the dependencies:
 
    ```
    > npm install
@@ -114,7 +114,7 @@ deployment
 
 * admin reset password on server; resetToken field in user
 * test object database table
-* adminGetUsers/adminDeleteUsers in nodeserver
+* adminGetUsers/adminDeleteUsers in server
 * switch to vuetify
 * email to lowercase
 

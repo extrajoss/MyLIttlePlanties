@@ -2,13 +2,12 @@ const path = require('path')
 const fs = require('fs')
 const del = require('del')
 
-const bcrypt = require('bcryptjs')
 const Sequelize = require('sequelize')
 const sequelizeJson = require('sequelize-json')
 
 const config = require('./config')
-const conn = require('./conn')
-let db = conn.db
+const models = require('./models')
+let db = models.sequelize
 
 /**
  *
@@ -42,7 +41,7 @@ function unwrapInstance (instance) {
   if (instance === null) {
     return null
   } else {
-    return instance.get({plain: true})
+    return instance.get({ plain: true })
   }
 }
 
@@ -97,98 +96,6 @@ async function storeFilesInConfigDir (fileList, checkFilesForError) {
 }
 
 /**
- * Default User model and accessor functions
- *
- * Unwrapped JSON structure:
- * {
- *   id: Number,
- *   name: string,
- *   password: salted password string,
- *   email: string
- * }
- */
-
-const User = db.define('User', {
-  id: {
-    primaryKey: true,
-    type: Sequelize.UUID,
-    defaultValue: Sequelize.UUIDV4
-  },
-  name: Sequelize.STRING,
-  email: {
-    type: Sequelize.STRING,
-    unique: true
-  },
-  password: {
-    type: Sequelize.STRING,
-    set (val) {
-      let saltedPassword = bcrypt.hashSync(val, bcrypt.genSaltSync(10))
-      this.setDataValue('password', saltedPassword)
-    }
-  },
-  isAdmin: {
-    type: Sequelize.BOOLEAN,
-    allowNull: false,
-    defaultValue: false
-  }
-})
-
-function createUser (values) {
-  return User
-    .findOne({where: {id: values.id}})
-    .then(user => {
-      if (user === null) {
-        return User
-          .create(values)
-          .then(unwrapInstance)
-      }
-    })
-}
-
-function updateUser (values) {
-  return User
-    .findOne({where: {id: values.id}})
-    .then(user => {
-      if (user) {
-        return user
-          .updateAttributes(values)
-          .then(unwrapInstance)
-      } else {
-        return null
-      }
-    })
-}
-
-function fetchUser (values) {
-  return User
-    .findOne({where: values})
-    .then(user => {
-      if (user) {
-        return unwrapInstance(user)
-      } else {
-        return null
-      }
-    })
-}
-
-function checkUserWithPassword (user, password) {
-  return new Promise((resolve) => {
-    bcrypt.compare(
-      password,
-      user.password,
-      (err, isMatch) => {
-        if (err) {
-          resolve(null)
-        } else if (isMatch) {
-          resolve(user)
-        } else {
-          resolve(null)
-        }
-      })
-  })
-}
-
-/**
  * Custom database models and relationships between models
  */
 
@@ -204,12 +111,12 @@ const Object = db.define('Object', {
 })
 
 async function createObject (attr, data) {
-  let object = await Object.create({attr, data})
+  let object = await Object.create({ attr, data })
   return unwrapInstance(object)
 }
 
 function findObject (objectId) {
-  return Object.findOne({where: {id: objectId}})
+  return Object.findOne({ where: { id: objectId } })
 }
 
 function fetchObject (objectId) {
@@ -217,7 +124,7 @@ function fetchObject (objectId) {
 }
 
 function deleteObject (objectId) {
-  return Object.destroy({where: {objectId}})
+  return Object.destroy({ where: { objectId } })
 }
 
 async function saveObject (objectId, values) {
@@ -226,11 +133,8 @@ async function saveObject (objectId, values) {
   return unwrapInstance(result)
 }
 
-/**
- * Module Initialization on startup
- */
-async function init () {
-  await db.sync()
+const init = async function () {
+  await models.sequelize.sync({ force: false })
   console.log('> Models.init done')
 }
 
@@ -238,10 +142,6 @@ init()
 
 module.exports = {
   storeFilesInConfigDir,
-  createUser,
-  fetchUser,
-  checkUserWithPassword,
-  updateUser,
   createObject,
   fetchObject,
   saveObject,
